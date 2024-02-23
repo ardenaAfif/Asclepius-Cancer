@@ -6,4 +6,5 @@
     <string name="analyze">Analyze</string>
     <string name="result">Hasil Analisis</string>
     <string name="crop_image">Crop Image</string>
+    <string name="onError">Image classifier failed to initialize. See error logs for details</string>
 </resources>
