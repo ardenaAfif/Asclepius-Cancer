@@ -69,7 +69,7 @@ class ImageClassifierHelper(
         val tensorImage = imageProcessor.process(TensorImage.fromBitmap(toBitmap(imageUri)))
 
         val results = imageClassifier?.classify(tensorImage)
-        classifierListener?.onSuccess(results)
+        classifierListener?.onResults(results)
     }
 
     private fun toBitmap(imageUri: Uri): Bitmap {
@@ -83,7 +83,7 @@ class ImageClassifierHelper(
 
     interface ClassifierListener {
         fun onError(error: String)
-        fun onSuccess(
+        fun onResults(
             results: List<Classifications>?
         )
     }

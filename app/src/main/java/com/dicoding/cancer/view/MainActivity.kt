@@ -9,12 +9,17 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import com.dicoding.cancer.databinding.ActivityMainBinding
+import com.dicoding.cancer.helper.ImageClassifierHelper
 import com.yalantis.ucrop.UCrop
+import org.tensorflow.lite.support.label.Category
+import org.tensorflow.lite.task.vision.classifier.Classifications
 import java.io.File
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
+    private lateinit var imageClassifierHelper: ImageClassifierHelper
 
     private var currentImageUri: Uri? = null
 
@@ -24,6 +29,36 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         buttonAction()
+
+        imageClassifierHelper = ImageClassifierHelper(
+            context = this,
+            classifierListener = object : ImageClassifierHelper.ClassifierListener {
+
+                override fun onError(error: String) {
+                    runOnUiThread {
+                        binding.progressIndicator.isVisible = false
+                        enableButton()
+                        showToast(error)
+                    }
+                }
+
+                override fun onResults(results: List<Classifications>?) {
+                    runOnUiThread {
+                        Log.d(TAG, results.toString())
+
+                        binding.progressIndicator.isVisible = false
+                        enableButton()
+
+                        val result = results
+                            ?.first()
+                            ?.categories
+                            ?.first { it.score > 0.5 }
+
+                        moveToResult(result)
+                    }
+                }
+            }
+        )
     }
 
     // Handle uCrop result
@@ -48,7 +83,6 @@ class MainActivity : AppCompatActivity() {
         if (uri != null) {
             currentImageUri = uri
             showImage()
-//            startCrop(uri)
         } else {
             Log.d("Photo Picker", "No media selected")
         }
@@ -70,14 +104,15 @@ class MainActivity : AppCompatActivity() {
             galleryButton.setOnClickListener {
                 startGallery()
             }
+            analyzeButton.setOnClickListener {
+                analyzeImage()
+            }
         }
     }
 
     private fun startGallery() {
         launcherGallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
     }
-
-
 
 
     private fun showImage() {
@@ -88,16 +123,32 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun analyzeImage() {
-        // TODO: Menganalisa gambar yang berhasil ditampilkan.
+        binding.progressIndicator.isVisible = true
+        if (currentImageUri == null) return
+
+        imageClassifierHelper.classifyStaticImage(currentImageUri!!)
     }
 
-    private fun moveToResult() {
+    private fun moveToResult(data: Category?) {
         val intent = Intent(this, ResultActivity::class.java)
+        intent.putExtra(ResultActivity.EXTRA_NAME, data?.label)
+        intent.putExtra(ResultActivity.EXTRA_SCORE, data?.score)
+        intent.putExtra(ResultActivity.EXTRA_URI, currentImageUri.toString())
         startActivity(intent)
     }
 
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun disableButton() = with(binding) {
+        galleryButton.isEnabled = false
+        analyzeButton.isEnabled = false
+    }
+
+    private fun enableButton() = with(binding) {
+        galleryButton.isEnabled = true
+        analyzeButton.isEnabled = currentImageUri != null
     }
 
     companion object {
