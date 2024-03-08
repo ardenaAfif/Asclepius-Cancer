@@ -1,9 +1,8 @@
 package com.dicoding.cancer.view
 
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import com.dicoding.cancer.R
+import androidx.appcompat.app.AppCompatActivity
 import com.dicoding.cancer.databinding.ActivityResultBinding
 
 class ResultActivity : AppCompatActivity() {

@@ -1,6 +1,7 @@
 package com.dicoding.cancer.view
 
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -9,10 +10,16 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.graphics.createBitmap
 import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
 import com.dicoding.cancer.databinding.ActivityMainBinding
 import com.dicoding.cancer.helper.ImageClassifierHelper
+import com.dicoding.cancer.helper.getImageUri
 import com.yalantis.ucrop.UCrop
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.tensorflow.lite.support.label.Category
 import org.tensorflow.lite.task.vision.classifier.Classifications
 import java.io.File
@@ -29,7 +36,10 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         buttonAction()
+        imageClassifier()
+    }
 
+    private fun imageClassifier() {
         imageClassifierHelper = ImageClassifierHelper(
             context = this,
             classifierListener = object : ImageClassifierHelper.ClassifierListener {
@@ -37,7 +47,6 @@ class MainActivity : AppCompatActivity() {
                 override fun onError(error: String) {
                     runOnUiThread {
                         binding.progressIndicator.isVisible = false
-                        enableButton()
                         showToast(error)
                     }
                 }
@@ -47,7 +56,6 @@ class MainActivity : AppCompatActivity() {
                         Log.d(TAG, results.toString())
 
                         binding.progressIndicator.isVisible = false
-                        enableButton()
 
                         val result = results
                             ?.first()
@@ -89,20 +97,31 @@ class MainActivity : AppCompatActivity() {
     }
 
     // Add a function to start uCrop
-    private fun startCrop(imageUri: Uri) {
-        val options = UCrop.Options()
-
-        val destinationUri = Uri.fromFile(File(cacheDir, "cropped_image.jpg"))
-        UCrop.of(imageUri, destinationUri)
-            .withAspectRatio(1f, 1f)
-            .withOptions(options)
-            .start(this)  // Memanggil launcherCropImage untuk menangani hasil pemangkasan
+    private fun startCrop() {
+        currentImageUri?.let {
+            val tempFile = File.createTempFile("crop_image", ".png")
+            val destinationUri = Uri.fromFile(tempFile)
+            val intent = UCrop.of(it, destinationUri)
+                .withAspectRatio(1F, 1F)
+                .getIntent(this)
+            launcherCropImage.launch(intent)
+        }
     }
 
     private fun buttonAction() {
         binding.apply {
             galleryButton.setOnClickListener {
                 startGallery()
+            }
+            linearCrop.setOnClickListener {
+                if (currentImageUri == null) {
+                    showToast("Please select an image first")
+                } else {
+                    startCrop()
+                }
+            }
+            linearSample.setOnClickListener {
+                showSampleDialog()
             }
             analyzeButton.setOnClickListener {
                 analyzeImage()
@@ -124,7 +143,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun analyzeImage() {
         binding.progressIndicator.isVisible = true
-        if (currentImageUri == null) return
+        if (currentImageUri == null) {
+            showToast("Please select an image first")
+            binding.progressIndicator.isVisible = false
+            return
+        }
 
         imageClassifierHelper.classifyStaticImage(currentImageUri!!)
     }
@@ -137,18 +160,29 @@ class MainActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
+    // Sample Image Dialog
+    private fun showSampleDialog() {
+        SampleImageDialog { resId ->
+            if (resId != null) {
+                lifecycleScope.launch(Dispatchers.Main) {
+                    binding.progressIndicator.isVisible = true
+                    invalidateOptionsMenu()
+
+                    val uri = withContext(Dispatchers.IO) {
+                        val bitmap = BitmapFactory.decodeResource(resources, resId)
+                        getImageUri(bitmap)
+                    }
+
+                    binding.progressIndicator.isVisible = false
+                    currentImageUri = uri
+                    showImage()
+                }
+            }
+        }.show(supportFragmentManager, null)
+    }
+
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-    }
-
-    private fun disableButton() = with(binding) {
-        galleryButton.isEnabled = false
-        analyzeButton.isEnabled = false
-    }
-
-    private fun enableButton() = with(binding) {
-        galleryButton.isEnabled = true
-        analyzeButton.isEnabled = currentImageUri != null
     }
 
     companion object {

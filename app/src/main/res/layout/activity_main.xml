@@ -37,15 +37,15 @@
         android:gravity="center"
         android:orientation="horizontal"
         android:layout_marginTop="10dp"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="30dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
             android:id="@+id/cropImage"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:src="@drawable/ic_crop"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_crop_image"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -55,6 +55,36 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/crop_image"
+            android:textColor="?attr/colorOnPrimary"
+            android:layout_marginStart="4dp"
+            android:textSize="16sp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/linearSample"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:layout_marginTop="15dp"
+        android:layout_marginEnd="30dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/sampleImage"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:src="@drawable/ic_crop"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="?attr/colorOnPrimary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/sample_image"
             android:textColor="?attr/colorOnPrimary"
             android:layout_marginStart="4dp"
             android:textSize="16sp"/>

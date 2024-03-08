@@ -4,6 +4,8 @@
     <color name="grey">#303030</color>
     <color name="white">#FFFFFFFF</color>
 
+    <color name="button_disabled">#9E9E9E</color> <!-- Warna saat tombol dinonaktifkan -->
+
     <color name="green">#2AAE63</color>
     <color name="green_light">#00FF0D</color>
 </resources>
